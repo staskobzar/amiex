@@ -76,13 +76,13 @@ defmodule AMI.PacketTest do
                 "SIP/000a4"
               ]}
 
-    assert AMI.Packet.field(map, "") == {:not_found}
-    assert AMI.Packet.field(map, "fooBar") == {:not_found}
+    assert AMI.Packet.field(map, "") == {:error, :not_found}
+    assert AMI.Packet.field(map, "fooBar") == {:error, :not_found}
   end
 
   test "to_json" do
-    assert AMI.Packet.to_json(nil) == {:invalid_input}
-    assert AMI.Packet.to_json("") == {:invalid_input}
+    assert AMI.Packet.to_json(nil) == {:error, :invalid_input}
+    assert AMI.Packet.to_json("") == {:error, :invalid_input}
     assert AMI.Packet.to_json(Map.new()) == "{}"
 
     {:ok, map} = AMI.Packet.parse("Action: Status\r\n\r\n")

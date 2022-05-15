@@ -28,7 +28,7 @@ defmodule AMI.Packet do
   def field(map, name) do
     case Enum.find(map, fn {k, _} -> String.downcase(name) == String.downcase(k) end) do
       {_, val} -> {:ok, val}
-      _ -> {:not_found}
+      _ -> {:error, :not_found}
     end
   end
 
@@ -36,9 +36,7 @@ defmodule AMI.Packet do
     "{" <> to_json(Map.to_list(map)) <> "}"
   end
 
-  def to_json([h | t]) do
-    {k, v} = h
-
+  def to_json([{k, v} | t]) do
     ~s("#{k}":) <>
       cond do
         length(v) > 1 -> inspect(v)
@@ -50,13 +48,9 @@ defmodule AMI.Packet do
       end
   end
 
-  def to_json([]) do
-    ""
-  end
+  def to_json([]), do: ""
 
-  def to_json(_map) do
-    {:invalid_input}
-  end
+  def to_json(_map), do: {:error, :invalid_input}
 
   defp fold(map) do
     map
