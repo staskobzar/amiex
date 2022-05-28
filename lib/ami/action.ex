@@ -21,6 +21,13 @@ defmodule AMI.Action do
     {:invalid}
   end
 
+  def login(user, passwd) do
+    {:ok, pack} = AMI.Action.new("Login", [])
+    {:ok, pack} = AMI.Action.add_field(pack, "Username", user)
+    {:ok, pack} = AMI.Action.add_field(pack, "Secret", passwd)
+    AMI.Action.to_string(pack)
+  end
+
   defp create(%{} = map, [h | tail]) do
     {k, v} = h
 

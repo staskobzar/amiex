@@ -57,6 +57,19 @@ defmodule AMI.ActionTest do
     assert {:invalid} = AMI.Action.new("Foo", [{"", ""}])
   end
 
+  test "#login action" do
+    packet = AMI.Action.login("admin", "pa55w0rd")
+
+    {:ok, rx} =
+      Regex.compile(
+        "Action: Login\r\n" <>
+          "ActionID: [a-z0-9]+\r\nSecret: pa55w0rd\r\n" <>
+          "Username: admin\r\n\r\n"
+      )
+
+    assert String.match?(packet, rx)
+  end
+
   test "#new fail on invalid action" do
     assert {:invalid} = AMI.Action.new("", [])
     assert {:invalid} = AMI.Action.new("   ", [])
