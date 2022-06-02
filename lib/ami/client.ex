@@ -5,6 +5,9 @@ defmodule AMI.Client do
   @timeout 3000
   @table_name :amiex_socks_table
 
+  @doc """
+  Start AMI client
+  """
   def start_link({host, port, user, passwd, module}) do
     case :ets.whereis(@table_name) do
       :undefined -> :ets.new(@table_name, [:named_table, :public])
@@ -18,24 +21,22 @@ defmodule AMI.Client do
     )
   end
 
+  @doc """
+  Send AMI Action packet via established connection by client
+  identified by addr
+  """
+  @spec send(action :: AMI.Action.t(), addr :: String.t()) :: :ok
   def send(action, addr) do
     Logger.debug("Sending action to #{addr}")
     GenServer.cast(pname(addr), {:send, action, addr})
   end
 
+  @doc """
+  Send AMI Action to all established connections via clients
+  """
+  @spec broadcast(action :: AMI.Action.t()) :: :ok
   def broadcast(action) do
     broadcast(:ets.tab2list(@table_name), action)
-  end
-
-  def broadcast([{addr, _} | tail], action) do
-    Logger.debug("Broadcast to #{addr}")
-    __MODULE__.send(action, addr)
-    broadcast(tail, action)
-  end
-
-  def broadcast([], _action) do
-    Logger.debug("Broadcast done")
-    :ok
   end
 
   @impl true
@@ -105,12 +106,6 @@ defmodule AMI.Client do
     {:noreply, state}
   end
 
-  @impl true
-  def terminate(_reason, %{sock: sock}) do
-    :gen_tcp.close(sock)
-    Logger.debug("AMI session is terminated")
-  end
-
   defp connect(%{host: host, port: port} = state) do
     case tcp_connect(host, port) do
       {:ok, sock} ->
@@ -153,6 +148,17 @@ defmodule AMI.Client do
       :ok -> Logger.debug("Successfully send AMI action")
       {:error, reason} -> Logger.error("Failed to send AMI packet: #{reason}")
     end
+  end
+
+  defp broadcast([{addr, _} | tail], action) do
+    Logger.debug("Broadcast to #{addr}")
+    __MODULE__.send(action, addr)
+    broadcast(tail, action)
+  end
+
+  defp broadcast([], _action) do
+    Logger.debug("Broadcast done")
+    :ok
   end
 
   defp to_key(host, port), do: "#{host}:#{port}"

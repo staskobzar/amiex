@@ -1,4 +1,11 @@
 defmodule AMI.Action do
+  @typedoc """
+  AMI Action type is a map of headers and values.
+  Values are lists because AMI protocol allows to
+  have multiple headers with the same name
+  """
+  @type t :: map()
+
   def new(action) when is_bitstring(action) do
     new(action, [])
   end
