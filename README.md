@@ -20,7 +20,7 @@ def deps do
 end
 ```
 
-The docs can be found at [https://hexdocs.pm/amiex](https://hexdocs.pm/amiex).
+The docs can be found at [https://hexdocs.pm/amiex](https://hexdocs.pm/amiex/AMI.html).
 
 ## Usage
 
