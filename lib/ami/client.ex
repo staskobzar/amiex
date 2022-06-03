@@ -1,4 +1,37 @@
 defmodule AMI.Client do
+  @moduledoc """
+  Client module to connect Asterisk server and login AMI.
+
+  Module fits to be used in a supervisor tree.
+
+  When connection is lost in case of network problems it will
+  keep trying to re-connect again every 3 seconds.
+
+  ## Example using with supervisor
+
+  ```
+    children = [
+      %{
+        id: :pbx01,
+        start: {
+          AMI.Client,
+          :start_link,
+          [{'pbx01.myphones.com', 5038, "admin", "secret4", MyAMImodule}]
+        }
+      },
+      %{
+        id: :pbx02,
+        start: {
+          AMI.Client,
+          :start_link,
+          [{'127.0.0.1', 5038, "admin", "secret9", MyAMImodule}]
+        }
+      },
+    ]
+
+    Supervisor.start_link(children, strategy: :one_for_one)
+  ```
+  """
   require Logger
   use GenServer
 
@@ -6,7 +39,27 @@ defmodule AMI.Client do
   @table_name :amiex_socks_table
 
   @doc """
-  Start AMI client
+  Starts a AMI client linked to the current process.
+
+  Can be userd to start the Client in a supervisor tree.
+
+  ## Options
+
+  * `host` - remote Asterisk host or IP to connect
+
+  * `port` - remote AMI port
+
+  * `user` - AMI username as string
+
+  * `passwd` - AMI password as string
+
+  * `module` - elixir module that uses AMI and which will receive all incoming events.
+  See exmple in AMI module
+
+  ## Example
+  ```
+    AMI.Client.start_link({'localhost', 5447, "admin",  "5ecR37", MyModule})
+  ```
   """
   def start_link({host, port, user, passwd, module}) do
     case :ets.whereis(@table_name) do

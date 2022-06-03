@@ -2,6 +2,37 @@ defmodule AMI.Packet do
   defguardp is_valid_text(input) when is_bitstring(input) and byte_size(input) > 0
   defguardp is_valid_list(input) when is_map(input)
 
+  @typedoc """
+  AMI Event received from Asterisk. It is a map with fields as header name and
+  header values. Header value is a list as AMI supports multiple fields with
+  same name. For example, following AMI Event:
+
+  ```
+    Event: Status
+    Name: Channels
+    Var: foo=1
+    Var: bar=AAA
+  ```
+
+  Will be represented as:
+
+  ```
+    %AMI.Packet{
+      "Event" => ["Status"],
+      "Name" => ["Channels"],
+      "Var" => ["foo=1", "bar=AAA"]
+    }
+  ```
+
+  """
+  @type t :: map()
+
+  @doc """
+  Parse input Event text and convert to AMI.Packet
+
+  `input` AMI event received from Asterisk
+  """
+  @spec parse(input :: String.t()) :: {:ok, AMI.Packet.t()} | :error
   def parse(input) when is_valid_text(input) do
     map =
       String.split(input, "\r\n")
@@ -16,8 +47,12 @@ defmodule AMI.Packet do
     {:error, :invalid_input}
   end
 
-  def is_event?(map) when is_valid_list(map) do
-    case field(map, "Event") do
+  @doc """
+  Check if received AMI packet is event. Returns true or false
+  """
+  @spec is_event?(pack :: AMI.Packet.t()) :: boolean()
+  def is_event?(pack) when is_valid_list(pack) do
+    case field(pack, "Event") do
       {:ok, _} -> true
       _ -> false
     end
@@ -25,15 +60,26 @@ defmodule AMI.Packet do
 
   def is_event?(_map), do: false
 
-  def field(map, name) do
-    case Enum.find(map, fn {k, _} -> String.downcase(name) == String.downcase(k) end) do
+  @doc """
+  Search field value(s) in AMI Packet.
+
+  `map` is AMI.Packet to search
+
+  `name` field name to search
+  """
+  @spec field(pack :: t(), name :: String.t()) :: {:ok, list()} | {:error, :not_found}
+  def field(pack, name) do
+    case Enum.find(pack, fn {k, _} -> String.downcase(name) == String.downcase(k) end) do
       {_, val} -> {:ok, val}
       _ -> {:error, :not_found}
     end
   end
 
-  def to_json(map) when is_map(map) do
-    "{" <> to_json(Map.to_list(map)) <> "}"
+  @doc """
+  Converts AMI.Packet to JSON format
+  """
+  def to_json(pack) when is_map(pack) do
+    "{" <> to_json(Map.to_list(pack)) <> "}"
   end
 
   def to_json([{k, v} | t]) do
